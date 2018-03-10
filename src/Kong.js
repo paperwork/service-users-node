@@ -15,7 +15,7 @@ module.exports = class Kong extends Base {
     }
 
     async execute(method: string, url: string, payload: ?Object): Promise<Object> {
-        let responseCode = 200;
+        let responseCode = -1;
         let responseData = {};
 
         this.logger.debug(`Kong: Executing ${method} on ${url}...`);
@@ -23,19 +23,26 @@ module.exports = class Kong extends Base {
         try {
             const response = await axios[method](url, payload);
 
-            responseCode = response.code;
+            responseCode = response.status;
             responseData =  response.data;
 
             this.logger.debug(`Kong: Executed ${method} on ${url} successfully.`);
         } catch(response) {
-            responseCode = response.response.status;
-            responseData = response.response;
+            if(response.hasOwnProperty('response') === true
+            && typeof response.response !== 'undefined') {
+                responseCode = response.response.status;
+                responseData = response.response;
+            } else {
+                responseData = response;
+            }
 
             this.logger.debug(`Kong: Execution of ${method} on ${url} returned response code ${responseCode}.`);
         }
 
-        if(responseCode !== HttpStatus.OK && responseCode !== HttpStatus.CONFLICT) {
-            throw new Error(`Kong: ${JSON.stringify(responseData)}`);
+        if(responseCode !== HttpStatus.OK
+        && responseCode !== HttpStatus.CREATED
+        && responseCode !== HttpStatus.CONFLICT) {
+            throw new Error(`Kong: ${responseCode} ${JSON.stringify(responseData)}`);
         }
 
         return responseData;
