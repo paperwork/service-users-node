@@ -30,11 +30,11 @@ module.exports = class UserAuthLocalController extends PaperworkController {
     }
 
     static get resource(): string {
-        return 'authLocal';
+        return 'userAuthLocal';
     }
 
     static get route(): string {
-        return '/auth/local';
+        return '/users/auths/local';
     }
 
     constructor(config: ControllerConfig) {
