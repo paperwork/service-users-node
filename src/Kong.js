@@ -73,9 +73,9 @@ module.exports = class Kong extends Base {
 
         response = await this.execute('post', `${this._kongApiUrl}/apis`, {
             'uris': '/users',
-            'strip_uri': true,
+            'strip_uri': false,
             'name': 'service-users',
-            'upstream_url': `http://service-users:${this.getEnv('SERVER_PORT')}`
+            'upstream_url': `http://${this.getEnv('SERVICE_USERS_URL')}`
         });
 
         response = await this.execute('post', `${this._kongApiUrl}/apis/service-users/plugins`, {
