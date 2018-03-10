@@ -1,8 +1,6 @@
 Paperwork Users Service
 =======================
 
-## OpenSource note-taking & archiving
-
 [![Build Status](https://travis-ci.org/paperworkco/service-users.svg)](https://travis-ci.org/paperworkco/service-users)
 
 ### Development
