@@ -74,11 +74,18 @@ module.exports = class Kong extends Base {
         response = await this.execute('post', `${this._kongApiUrl}/apis`, {
             'uris': '/users',
             'strip_uri': false,
-            'name': 'service-users',
-            'upstream_url': `http://${this.getEnv('SERVICE_USERS_URL')}`
+            'name': `${this.getEnv('SERVER_NAME')}_users`,
+            'upstream_url': `${this.getEnv('SERVICE_USERS_URL')}`
         });
 
-        response = await this.execute('post', `${this._kongApiUrl}/apis/service-users/plugins`, {
+        response = await this.execute('post', `${this._kongApiUrl}/apis`, {
+            'uris': '/auths',
+            'strip_uri': false,
+            'name': `${this.getEnv('SERVER_NAME')}_auths`,
+            'upstream_url': `${this.getEnv('SERVICE_USERS_URL')}`
+        });
+
+        response = await this.execute('post', `${this._kongApiUrl}/apis/${this.getEnv('SERVER_NAME')}_users/plugins`, {
             'name': 'jwt',
             'config.anonymous': guestId,
             'config.claims_to_verify': [
