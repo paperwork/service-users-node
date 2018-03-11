@@ -8,7 +8,6 @@ const cors = require('kcors');
 const KoaRouter = require('koa-router');
 const KoaPassport = require('koa-passport');
 const bodyParser = require('koa-bodyparser');
-const Kong = require('./Kong');
 
 const paperframe = require('paperframe');
 const Base = require('paperframe').Base;
@@ -20,7 +19,6 @@ const packageJson = require('../package.json');
 class Server extends Base {
     _server:                    Function
     _router:                    Router
-    _kong:                      Kong
     _logger:                    Function
 
     constructor() {
@@ -72,12 +70,6 @@ class Server extends Base {
 
             this.logger.debug('Server: Applying routes ...');
             this._server.use(this._router.routes());
-
-            this._kong = new Kong({
-                'logger': this.logger
-            });
-
-            await this._kong.initialize();
 
             return true;
         } catch(error) {
