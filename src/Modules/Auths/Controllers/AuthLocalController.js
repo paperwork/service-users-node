@@ -22,7 +22,7 @@ const Strategy = require('passport-local').Strategy;
 const Joi = require('joi');
 const HttpStatus = require('http-status-codes');
 
-module.exports = class UserAuthLocalController extends PaperworkController {
+module.exports = class AuthLocalController extends PaperworkController {
     _auth:                      passport
 
     static get dependencies(): ControllerDependenciesDefinition {
@@ -30,11 +30,11 @@ module.exports = class UserAuthLocalController extends PaperworkController {
     }
 
     static get resource(): string {
-        return 'userAuthLocal';
+        return 'authLocal';
     }
 
     static get route(): string {
-        return '/users/auths/local';
+        return '/auths/local';
     }
 
     constructor(config: ControllerConfig) {
