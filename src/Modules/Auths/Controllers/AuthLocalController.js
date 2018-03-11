@@ -26,7 +26,7 @@ module.exports = class AuthLocalController extends PaperworkController {
     _auth:                      passport
 
     static get dependencies(): ControllerDependenciesDefinition {
-        return ['database', 'jwt'];
+        return ['database', 'kong', 'jwt'];
     }
 
     static get resource(): string {
@@ -37,8 +37,19 @@ module.exports = class AuthLocalController extends PaperworkController {
         return '/auths/local';
     }
 
+    get routeAcl(): ControllerRouteAclTable {
+        let acl: ControllerRouteAclTable = {
+            'create': {
+                'protected': false
+            }
+        };
+
+        return acl;
+    }
+
     constructor(config: ControllerConfig) {
         super(config);
+        this.aclToKong(AuthLocalController.resource, AuthLocalController.route, this.routeAcl);
 
         this._auth = passport;
         this._auth.use(new Strategy((username: string, password: string, callback: Function) => {
