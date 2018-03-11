@@ -70,10 +70,12 @@ module.exports = class JwtServiceProvider extends ServiceProvider {
 
     async getToken(credentials: JwtCredentials, payload: Object): Promise<?JwtToken> {
         try {
+            const kilo = 1000;
+            const epochNow = Math.floor(Date.now() / kilo);
             const jwtToken: JwtToken = await jwtSign(payload, credentials.secret, {
                 'algorithm': 'HS256',
-                'expiresIn': this._accessTokenExpiresIn,
-                //'notBefore': this._accessTokenNotBefore, // TODO: Not in use yet.
+                'expiresIn': epochNow + this._accessTokenExpiresIn,
+                // 'notBefore': epochNow, // Not in use yet.
                 'issuer': credentials.key,
                 'jwtid': credentials.id,
                 'header': {

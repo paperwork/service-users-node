@@ -82,8 +82,8 @@ module.exports = class Kong extends Base {
             'name': 'jwt',
             'config.anonymous': guestId,
             'config.claims_to_verify': [
-                'exp',
-                'nbf'
+                'exp'
+                // 'nbf' // Not in use yet
             ]
         });
 
