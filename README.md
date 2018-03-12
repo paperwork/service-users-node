@@ -51,6 +51,10 @@ $ npm test
 
 TODO: Write tests.
 
+#### API documentation
+
+[Here](documentation/API.md).
+
 ### Docker
 
 ```bash
@@ -58,3 +62,4 @@ $ cd service-users/
 $ docker build -t="paperwork/service-users" .
 $ docker run -it --rm --name="paperwork-service-users" --env-file .env paperwork/service-users
 ```
+
