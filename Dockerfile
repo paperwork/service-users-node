@@ -1,22 +1,54 @@
 FROM mhart/alpine-node:latest
 
 RUN apk update \
- && apk add python2 make curl postgresql-client
+ && apk add python2 make \
+ && apk add curl unzip bash jq ca-certificates \
+ && rm -rf /var/cache/apk/*
 
-# get ContainerPilot release
-ENV CONTAINERPILOT_VERSION 2.7.2
-RUN export CP_SHA1=e886899467ced6d7c76027d58c7f7554c2fb2bcc \
-    && curl -Lso /tmp/containerpilot.tar.gz \
-         "https://github.com/joyent/containerpilot/releases/download/${CONTAINERPILOT_VERSION}/containerpilot-${CONTAINERPILOT_VERSION}.tar.gz" \
-    && echo "${CP_SHA1}  /tmp/containerpilot.tar.gz" | sha1sum -c \
-    && tar zxf /tmp/containerpilot.tar.gz -C /bin \
-    && rm /tmp/containerpilot.tar.gz
+# Install Consul
+# Releases at https://releases.hashicorp.com/consul
+RUN set -ex \
+    && export CONSUL_VERSION=1.0.6 \
+    && export CONSUL_CHECKSUM=bcc504f658cef2944d1cd703eda90045e084a15752d23c038400cf98c716ea01 \
+    && curl --retry 7 --fail -vo /tmp/consul.zip "https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_amd64.zip" \
+    && echo "${CONSUL_CHECKSUM}  /tmp/consul.zip" | sha256sum -c \
+    && unzip /tmp/consul -d /usr/local/bin \
+    && rm /tmp/consul.zip \
+    # Create empty directories for Consul config and data \
+    && mkdir -p /etc/consul \
+    && mkdir -p /var/lib/consul \
+    && mkdir /config
+
+# Install Consul template
+# Releases at https://releases.hashicorp.com/consul-template/
+RUN set -ex \
+    && export CONSUL_TEMPLATE_VERSION=0.19.4 \
+    && export CONSUL_TEMPLATE_CHECKSUM=5f70a7fb626ea8c332487c491924e0a2d594637de709e5b430ecffc83088abc0 \
+    && curl --retry 7 --fail -Lso /tmp/consul-template.zip "https://releases.hashicorp.com/consul-template/${CONSUL_TEMPLATE_VERSION}/consul-template_${CONSUL_TEMPLATE_VERSION}_linux_amd64.zip" \
+    && echo "${CONSUL_TEMPLATE_CHECKSUM}  /tmp/consul-template.zip" | sha256sum -c \
+    && unzip /tmp/consul-template.zip -d /usr/local/bin \
+    && rm /tmp/consul-template.zip
+
+# Add Containerpilot and set its configuration
+ENV CONTAINERPILOT /etc/containerpilot.json5
+ENV CONTAINERPILOT_VERSION 3.7.0
+
+RUN export CONTAINERPILOT_CHECKSUM=b10b30851de1ae1c095d5f253d12ce8fe8e7be17 \
+    && export archive=containerpilot-${CONTAINERPILOT_VERSION}.tar.gz \
+    && curl -Lso /tmp/${archive} \
+         "https://github.com/joyent/containerpilot/releases/download/${CONTAINERPILOT_VERSION}/${archive}" \
+    && echo "${CONTAINERPILOT_CHECKSUM}  /tmp/${archive}" | sha1sum -c \
+    && tar zxf /tmp/${archive} -C /usr/local/bin \
+    && rm /tmp/${archive}
 
 # add ContainerPilot configuration
-COPY containerpilot.json /etc/containerpilot.json
-ENV CONTAINERPILOT=file:///etc/containerpilot.json
+COPY containerpilot.json5 /etc/containerpilot.json5
+COPY containerpilot.sh /usr/local/bin/
+RUN chmod 500 /usr/local/bin/containerpilot.sh
 
-COPY run.sh /usr/local/bin/run.sh
+
+
+########### Service related ###########
 
 WORKDIR /app
 COPY . .
@@ -27,4 +59,8 @@ RUN npm install \
  && npm install --production \
  && apk del python2 make
 
-CMD ["/bin/containerpilot", "/usr/local/bin/run.sh", "database-kong"]
+
+EXPOSE 3000
+
+ENTRYPOINT []
+CMD ["containerpilot"]
