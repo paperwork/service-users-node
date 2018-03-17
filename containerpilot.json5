@@ -1,0 +1,59 @@
+{
+  consul: 'localhost:8500',
+  jobs: [
+    {
+      name: 'preStart',
+      exec: '/usr/local/bin/containerpilot.sh onStart',
+      when: {
+        source: 'consul-agent',
+        once: 'healthy'
+      }
+    },
+    {
+      name: 'service-users',
+      port: 3000,
+      exec: [
+        'node', '--harmony', '/app/compiled/Server.js'
+      ],
+      health: {
+        exec: '/usr/local/bin/containerpilot.sh health',
+        interval: 10,
+        ttl: 25
+      },
+      when: {
+        source: 'preStart',
+        once: 'exitSuccess'
+      },
+      restarts: 'unlimited'
+    },
+    {
+      name: 'consul-agent',
+      exec: '/usr/local/bin/containerpilot.sh consul',
+      health: {
+        exec: 'curl -so /dev/null http://localhost:8500',
+        interval: 10,
+        ttl: 25
+      },
+      restarts: 'unlimited'
+    },
+    {
+      name: 'users-onchange',
+      exec: '/usr/local/bin/containerpilot.sh onChange',
+      when: {
+        source: 'watch.users',
+        once: 'changed'
+      }
+    }
+  ],
+  telemetry: {
+    port: 9090,
+    interfaces: ['eth0', 'eth0[1]', 'lo', 'lo0', 'inet'],
+    tags: []
+  },
+  watches: [
+    {
+      name: 'service-users',
+      interval: 5
+    }
+  ]
+}
