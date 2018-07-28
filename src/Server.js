@@ -10,8 +10,8 @@ const KoaPassport = require('koa-passport');
 const bodyParser = require('koa-bodyparser');
 
 const paperframe = require('paperframe');
-const Base = require('paperframe').Base;
-const Router = require('paperframe').Router;
+const Base = require('paperframe/lib/Base');
+const Router = require('paperframe/lib/Router');
 const bunyan = require('bunyan');
 
 const packageJson = require('../package.json');
