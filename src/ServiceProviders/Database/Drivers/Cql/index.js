@@ -30,6 +30,7 @@ module.exports = class CqlDriver extends Driver {
         this._client = new cql.Client(this._connection);
         this._client.on('log', (level: string, className: string, message: string, furtherInfo: any) => {
             const loggerMethod = (level === 'verbose' ? 'debug' : level);
+            // @flowIgnore TODO: Fix this
             this.logger[loggerMethod]('Database: (CqlDriver) (%s) %s %j', className, message, furtherInfo);
         });
     }
