@@ -1,9 +1,14 @@
 //@flow
 
-import type {
-    JwtCredentials,
-    JwtToken
-} from './Types/Jwt.t';
+export type JwtCredentials = {
+    consumer_id: string,
+    created_at: number,
+    id: string,
+    key: string,
+    secret: string
+};
+
+export type JwtToken = string;
 
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
