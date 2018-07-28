@@ -38,15 +38,10 @@ class Server extends Base {
             'level': parseInt(this.getEnv('SERVER_LOGLEVEL'), 10)
         });
 
-
-        this.logger.info('██╗   ██╗███████╗███████╗██████╗ ███████╗');
-        this.logger.info('██║   ██║██╔════╝██╔════╝██╔══██╗██╔════╝');
-        this.logger.info('██║   ██║███████╗█████╗  ██████╔╝███████╗');
-        this.logger.info('██║   ██║╚════██║██╔══╝  ██╔══██╗╚════██║');
-        this.logger.info('╚██████╔╝███████║███████╗██║  ██║███████║');
-        this.logger.info(' ╚═════╝ ╚══════╝╚══════╝╚═╝  ╚═╝╚══════╝');
-        this.logger.info('                                   v%s', packageJson.version);
-        this.logger.info('                                         ');
+        this.logger.info('+=============================================================================+');
+        this.logger.info('%s', packageJson.name);
+        this.logger.info('v%s', packageJson.version);
+        this.logger.info('+=============================================================================+');
 
         this._server = new Koa();
         this._router = new Router({
