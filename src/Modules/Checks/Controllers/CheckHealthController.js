@@ -27,21 +27,6 @@ module.exports = class CheckHealthController extends PaperworkController {
         return '/checks/health';
     }
 
-    get routeAcl(): ControllerRouteAclTable {
-        let acl: ControllerRouteAclTable = {
-            'index': {
-                'protected': false
-            }
-        };
-
-        return acl;
-    }
-
-    constructor(config: ControllerConfig) {
-        super(config);
-        this.aclToKong(CheckHealthController.resource, CheckHealthController.route, this.routeAcl);
-    }
-
     async index(params: ControllerParams): ControllerActionReturn {
         return this.response(HttpStatus.OK, PaperworkStatusCodes.OK, {});
     }
