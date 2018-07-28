@@ -16,8 +16,8 @@ const bluebird = require('bluebird');
 
 const jwtSign = bluebird.promisify(jwt.sign);
 
-const ServiceProvider = require('paperframe').ServiceProvider;
-const PaperframeCommon = require('paperframe').Common;
+const ServiceProvider = require('paperframe/lib/ServiceProvider');
+const PaperframeCommon = require('paperframe/lib/Common');
 
 module.exports = class JwtServiceProvider extends ServiceProvider {
     _kongApiUrl:                string
