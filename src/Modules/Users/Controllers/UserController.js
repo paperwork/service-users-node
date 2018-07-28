@@ -76,7 +76,7 @@ module.exports = class UserController extends PaperworkController {
     /**
      * Before CREATE handler
      */
-    async beforeCreate(params: ControllerParams): ControllerParams {
+    async beforeCreate(params: ControllerParams): ControllerParamsReturn {
         const schema = Joi.object().keys({
             'email': Joi.string().email().required(),
             'password': Joi.string().strip().regex(/^.*(?=.{8,})(?=.*[a-zA-Z])(?=.*\d)(?=.*[!#$%&? "]).*$/).required() // TODO: Make the regex configurable
