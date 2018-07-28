@@ -3,9 +3,9 @@
 import type {
     ControllerParams,
     ControllerRouteAclTable
-} from 'paperframe';
+} from 'paperframe/lib/Controller';
 
-const JsonController = require('paperframe').JsonController;
+const JsonController = require('paperframe/lib/JsonController');
 
 const Joi = require('joi');
 const HttpStatus = require('http-status-codes');
