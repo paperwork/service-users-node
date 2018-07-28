@@ -16,6 +16,11 @@ const bunyan = require('bunyan');
 
 const packageJson = require('../package.json');
 
+import type {
+    EventPackage
+} from 'paperframe/lib/Event';
+
+
 class Server extends Base {
     _server:                    Function
     _router:                    Router
