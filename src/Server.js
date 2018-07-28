@@ -22,6 +22,7 @@ import type {
 
 
 class Server extends Base {
+    _serverName:                string
     _server:                    Function
     _router:                    Router
     _logger:                    Function
@@ -30,8 +31,10 @@ class Server extends Base {
         super();
         process.env.SERVICE_DIRNAME = __dirname;
 
+        this._serverName = this.getEnv('SERVER_NAME');
+
         this.logger = bunyan.createLogger({
-            'name': this.getEnv('SERVER_NAME'),
+            'name': this._serverName,
             'level': parseInt(this.getEnv('SERVER_LOGLEVEL'), 10)
         });
 
