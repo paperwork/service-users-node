@@ -72,7 +72,7 @@ module.exports = class KongServiceProvider extends ServiceProvider {
         && responseCode !== HttpStatus.CREATED
         && responseCode !== HttpStatus.CONFLICT) {
             console.error(responseData);
-            throw new Error(`Kong: ${responseCode}}`);
+            throw new Error(`Kong: ${responseCode}`);
         }
 
         return responseData;
