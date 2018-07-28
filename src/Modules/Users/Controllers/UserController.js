@@ -3,12 +3,16 @@
 import type {
     ControllerConfig,
     ControllerParams,
+    ControllerParamsReturn,
     ControllerDependenciesDefinition,
     ControllerActionReturn,
-    ControllerRouteAclTable,
+    ControllerRouteAclTable
+} from 'paperframe/lib/Controller';
+
+import type {
     EventId,
     EventPackage
-} from 'paperframe';
+} from 'paperframe/lib/Event';
 
 const PaperworkController = require('../../../Library/PaperworkController');
 const PaperworkStatusCodes = require('../../../Library/PaperworkStatusCodes');
