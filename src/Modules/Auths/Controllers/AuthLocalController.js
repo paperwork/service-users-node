@@ -3,15 +3,16 @@
 import type {
     ControllerConfig,
     ControllerParams,
+    ControllerParamsReturn,
     ControllerDependenciesDefinition,
     ControllerActionReturn,
     ControllerRouteAclTable
-} from 'paperframe';
+} from 'paperframe/lib/Controller';
 
 import type {
     JwtCredentials,
     JwtToken
-} from '../../../ServiceProviders/Jwt/Types/Jwt.t';
+} from '../../../ServiceProviders/Jwt';
 
 const PaperworkController = require('../../../Library/PaperworkController');
 const PaperworkStatusCodes = require('../../../Library/PaperworkStatusCodes');
