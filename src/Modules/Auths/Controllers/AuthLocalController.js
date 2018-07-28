@@ -82,7 +82,7 @@ module.exports = class AuthLocalController extends PaperworkController {
     /**
      * Before CREATE handler
      */
-    async beforeCreate(params: ControllerParams): ControllerParams {
+    async beforeCreate(params: ControllerParams): ControllerParamsReturn {
         const schema = Joi.object().keys({
             'username': Joi.string().required(),
             'password': Joi.string().required()
