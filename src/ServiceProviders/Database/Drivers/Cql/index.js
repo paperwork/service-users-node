@@ -1,8 +1,6 @@
 //@flow
 
-
-const Driver = require('paperframe').ServiceProviders.Database.Driver;
-
+const Driver = require('paperframe/lib/ServiceProviders/Database/Driver');
 const cql = require('cassandra-driver');
 
 module.exports = class CqlDriver extends Driver {
