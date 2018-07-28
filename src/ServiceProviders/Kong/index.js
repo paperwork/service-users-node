@@ -1,8 +1,5 @@
 //@flow
 
-import type {
-} from './Types/Kong.t';
-
 const axios = require('axios');
 const HttpStatus = require('http-status-codes');
 
