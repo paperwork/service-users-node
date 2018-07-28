@@ -16,7 +16,7 @@ const HttpStatus = require('http-status-codes');
 
 module.exports = class CheckHealthController extends PaperworkController {
     static get dependencies(): ControllerDependenciesDefinition {
-        return ['database', 'kong'];
+        return ['database'];
     }
 
     static get resource(): string {
