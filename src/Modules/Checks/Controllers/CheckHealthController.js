@@ -6,7 +6,7 @@ import type {
     ControllerDependenciesDefinition,
     ControllerActionReturn,
     ControllerRouteAclTable
-} from 'paperframe';
+} from 'paperframe/lib/Controller';
 
 const PaperworkController = require('../../../Library/PaperworkController');
 const PaperworkStatusCodes = require('../../../Library/PaperworkStatusCodes');
