@@ -14,6 +14,8 @@ const Base = require('paperframe/lib/Base');
 const Router = require('paperframe/lib/Router');
 const bunyan = require('bunyan');
 
+const NATS = require('node-nats-streaming');
+
 const packageJson = require('../package.json');
 
 import type {
@@ -26,6 +28,7 @@ class Server extends Base {
     _server:                    Function
     _router:                    Router
     _logger:                    Function
+    _nats:                      NATS
 
     constructor() {
         super();
@@ -48,6 +51,36 @@ class Server extends Base {
             'koaRouter': KoaRouter,
             'logger': this.logger
         });
+
+        this.initNats(this._router._ee);
+    }
+
+    initNats(eventEmitter: Function): boolean {
+        const natsConnection = this.getEnv('NATS_CONNECTION');
+
+        if(typeof natsConnection === 'undefined'
+        || natsConnection === null) {
+            return false;
+        }
+
+        this._nats = NATS.connect(natsConnection, this._serverName);
+        this._nats.on('connect', () =>{
+            let subscriptionOptions = this._nats.subscriptionOptions();
+            subscriptionOptions.setDeliverAllAvailable();
+            subscriptionOptions.setDurableName(this._serverName);
+
+            let eventsSubscription = this._nats.subscribe('events', subscriptionOptions);
+            eventsSubscription.on('message', (msg) => {
+                const eventPackage: EventPackage = {
+                    'data': msg.getData(),
+                    'timestamp': new Date()
+                };
+
+                return eventEmitter.emitAsync('NATS.MESSAGE.CREATE', eventPackage);
+            });
+        });
+
+        return true;
     }
 
     async initialize(): Promise<boolean> {
