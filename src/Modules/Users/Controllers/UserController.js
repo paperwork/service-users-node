@@ -22,7 +22,7 @@ const HttpStatus = require('http-status-codes');
 
 module.exports = class UserController extends PaperworkController {
     static get dependencies(): ControllerDependenciesDefinition {
-        return ['database', 'kong'];
+        return ['database', 'messaging', 'kong'];
     }
 
     static get resource(): string {
