@@ -17,7 +17,8 @@
     "debug": "gulp debug | node_modules/bunyan/bin/bunyan",
     "start": "gulp start",
     "ava": "ava",
-    "flow": "flow"
+    "flow": "flow",
+    "cassandra-migration": "cassandra-migration"
   },
   "keywords": [
     "paperwork",
@@ -71,6 +72,7 @@
     "bluebird": "^3.5.1",
     "bunyan": "^1.8.12",
     "cassandra-driver": "^3.5.0",
+    "cassandra-migration": "^2.7.0",
     "dotenv": "^6.0.0",
     "eventemitter2": "^5.0.1",
     "http-status-codes": "^1.3.0",
