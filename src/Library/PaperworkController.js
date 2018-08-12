@@ -1,8 +1,8 @@
 //@flow
 
 import type {
-    ControllerParams,
-    ControllerRouteAclTable
+    TControllerParams,
+    TControllerRouteAclTable
 } from 'paperframe/lib/Controller';
 
 const JsonController = require('paperframe/lib/JsonController');
@@ -13,7 +13,7 @@ const busboy = require('async-busboy');
 const forEach = require('lodash').forEach;
 
 module.exports = class PaperworkController extends JsonController {
-    validate(params: ControllerParams, schema: Object): ControllerParams {
+    validate(params: TControllerParams, schema: Object): TControllerParams {
         const validationResult = Joi.validate(params.body, schema);
         if(validationResult.error === null) {
             params.body = validationResult.value;
@@ -24,7 +24,7 @@ module.exports = class PaperworkController extends JsonController {
         throw validationResult.error;
     }
 
-    aclToKong(resource: string, route: string, aclTable: ControllerRouteAclTable) {
+    aclToKong(resource: string, route: string, aclTable: TControllerRouteAclTable) {
         forEach(aclTable, async (aclEntry: Object, aclMethod: string) => {
             let method: string;
             let uri: string;

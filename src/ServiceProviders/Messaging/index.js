@@ -7,7 +7,7 @@ const ServiceProvider = require('paperframe').ServiceProvider;
 const PaperframeCommon = require('paperframe').Common;
 
 import type {
-    EventPackage
+    TEventPackage
 } from 'paperframe/lib/Event';
 
 module.exports = class MessagingServiceProvider extends ServiceProvider {
@@ -43,7 +43,7 @@ module.exports = class MessagingServiceProvider extends ServiceProvider {
     }
 
     async _processMessage(message: Object, reply: Object, subject: string): Promise<boolean> {
-        const eventPackage: EventPackage = {
+        const eventPackage: TEventPackage = {
             'data': message,
             'timestamp': new Date()
         };

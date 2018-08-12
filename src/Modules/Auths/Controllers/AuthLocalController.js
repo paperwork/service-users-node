@@ -1,12 +1,12 @@
 //@flow
 
 import type {
-    ControllerConfig,
-    ControllerParams,
-    ControllerParamsReturn,
-    ControllerDependenciesDefinition,
-    ControllerActionReturn,
-    ControllerRouteAclTable
+    TControllerConfig,
+    TControllerParams,
+    TControllerParamsReturn,
+    TControllerDependenciesDefinition,
+    TControllerActionReturn,
+    TControllerRouteAclTable
 } from 'paperframe/lib/Controller';
 
 import type {
@@ -26,7 +26,7 @@ const HttpStatus = require('http-status-codes');
 module.exports = class AuthLocalController extends PaperworkController {
     _auth:                      passport
 
-    static get dependencies(): ControllerDependenciesDefinition {
+    static get dependencies(): TControllerDependenciesDefinition {
         return ['database', 'kong', 'jwt'];
     }
 
@@ -38,8 +38,8 @@ module.exports = class AuthLocalController extends PaperworkController {
         return '/auths/local';
     }
 
-    get routeAcl(): ControllerRouteAclTable {
-        let acl: ControllerRouteAclTable = {
+    get routeAcl(): TControllerRouteAclTable {
+        let acl: TControllerRouteAclTable = {
             'create': {
                 'protected': false
             }
@@ -48,7 +48,7 @@ module.exports = class AuthLocalController extends PaperworkController {
         return acl;
     }
 
-    constructor(config: ControllerConfig) {
+    constructor(config: TControllerConfig) {
         super(config);
         this.aclToKong(AuthLocalController.resource, AuthLocalController.route, this.routeAcl);
 
@@ -82,7 +82,7 @@ module.exports = class AuthLocalController extends PaperworkController {
     /**
      * Before CREATE handler
      */
-    async beforeCreate(params: ControllerParams): ControllerParamsReturn {
+    async beforeCreate(params: TControllerParams): TControllerParamsReturn {
         const schema = Joi.object().keys({
             'username': Joi.string().required(),
             'password': Joi.string().required()
@@ -94,7 +94,7 @@ module.exports = class AuthLocalController extends PaperworkController {
     /**
      * CREATE handler
      */
-    async create(params: ControllerParams): ControllerActionReturn {
+    async create(params: TControllerParams): TControllerActionReturn {
         const ctx = this.ctx;
         const next = this.next;
 
@@ -112,9 +112,9 @@ module.exports = class AuthLocalController extends PaperworkController {
                     'user': user
                 };
 
-                return this.response(HttpStatus.OK, PaperworkStatusCodes.AUTHENTICATION_SUCCEEDED, response);
+                return this.return(params, HttpStatus.OK, PaperworkStatusCodes.AUTHENTICATION_SUCCEEDED, response);
             } catch(error) {
-                return this.response(HttpStatus.INTERNAL_SERVER_ERROR, PaperworkStatusCodes.AUTHENTICATION_ERROR, error);
+                return this.return(params, HttpStatus.INTERNAL_SERVER_ERROR, PaperworkStatusCodes.AUTHENTICATION_ERROR, error);
             }
         })(ctx, next);
     }

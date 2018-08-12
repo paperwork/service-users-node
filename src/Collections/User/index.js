@@ -1,7 +1,7 @@
-//@flow
+// @flow
 
 
-const Collection = require('paperframe').Collection;
+const Collection = require('paperframe/lib/Collection');
 
 const drivers = {
     'cql': require('./Cql')

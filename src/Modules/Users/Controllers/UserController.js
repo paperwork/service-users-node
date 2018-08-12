@@ -1,17 +1,17 @@
 //@flow
 
 import type {
-    ControllerConfig,
-    ControllerParams,
-    ControllerParamsReturn,
-    ControllerDependenciesDefinition,
-    ControllerActionReturn,
-    ControllerRouteAclTable
+    TControllerConfig,
+    TControllerParams,
+    TControllerParamsReturn,
+    TControllerDependenciesDefinition,
+    TControllerActionReturn,
+    TControllerRouteAclTable
 } from 'paperframe/lib/Controller';
 
 import type {
-    EventId,
-    EventPackage
+    TEventId,
+    TEventPackage
 } from 'paperframe/lib/Event';
 
 const PaperworkController = require('../../../Library/PaperworkController');
@@ -21,7 +21,7 @@ const Joi = require('joi');
 const HttpStatus = require('http-status-codes');
 
 module.exports = class UserController extends PaperworkController {
-    static get dependencies(): ControllerDependenciesDefinition {
+    static get dependencies(): TControllerDependenciesDefinition {
         return ['database', 'messaging', 'kong'];
     }
 
@@ -33,8 +33,8 @@ module.exports = class UserController extends PaperworkController {
         return '/users';
     }
 
-    get routeAcl(): ControllerRouteAclTable {
-        let acl: ControllerRouteAclTable = {
+    get routeAcl(): TControllerRouteAclTable {
+        let acl: TControllerRouteAclTable = {
             'index': {
                 'protected': true
             },
@@ -53,30 +53,31 @@ module.exports = class UserController extends PaperworkController {
         return '**';
     }
 
-    constructor(controllerConfig: ControllerConfig) {
+    constructor(controllerConfig: TControllerConfig) {
         super(controllerConfig);
         this.aclToKong(UserController.resource, UserController.route, this.routeAcl);
     }
 
-    onEvent(eventId: string, eventPackage: EventPackage) {
+    onEvent(eventId: string, eventPackage: TEventPackage) {
         console.log(eventId);
         console.log(eventPackage);
     }
 
-    async index(params: ControllerParams): ControllerActionReturn {
+    async index(params: TControllerParams): TControllerActionReturn {
         const user = this.$C('user');
-        return this.response(HttpStatus.OK, PaperworkStatusCodes.OK, {});
+        return this.return(params, HttpStatus.OK, PaperworkStatusCodes.OK, {});
     }
 
-    async show(params: ControllerParams): ControllerActionReturn {
+    async show(params: TControllerParams): TControllerActionReturn {
         const user = this.$C('user');
-        return this.response(HttpStatus.OK, PaperworkStatusCodes.OK, {});
+
+        return this.return(params, HttpStatus.OK, PaperworkStatusCodes.OK, {});
     }
 
     /**
      * Before CREATE handler
      */
-    async beforeCreate(params: ControllerParams): ControllerParamsReturn {
+    async beforeCreate(params: TControllerParams): TControllerParamsReturn {
         const schema = Joi.object().keys({
             'email': Joi.string().email().required(),
             'password': Joi.string().strip().regex(/^.*(?=.{8,})(?=.*[a-zA-Z])(?=.*\d)(?=.*[!#$%&? "]).*$/).required() // TODO: Make the regex configurable
@@ -88,8 +89,8 @@ module.exports = class UserController extends PaperworkController {
     /**
      * CREATE handler
      */
-    async create(params: ControllerParams): ControllerActionReturn {
+    async create(params: TControllerParams): TControllerActionReturn {
         console.log(params);
-        return this.response(HttpStatus.OK, PaperworkStatusCodes.OK, {});
+        return this.return(params, HttpStatus.OK, PaperworkStatusCodes.OK, {});
     }
 };

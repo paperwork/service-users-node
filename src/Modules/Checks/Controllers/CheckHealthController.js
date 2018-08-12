@@ -1,11 +1,11 @@
 //@flow
 
 import type {
-    ControllerConfig,
-    ControllerParams,
-    ControllerDependenciesDefinition,
-    ControllerActionReturn,
-    ControllerRouteAclTable
+    TControllerConfig,
+    TControllerParams,
+    TControllerDependenciesDefinition,
+    TControllerActionReturn,
+    TControllerRouteAclTable
 } from 'paperframe/lib/Controller';
 
 const PaperworkController = require('../../../Library/PaperworkController');
@@ -15,7 +15,7 @@ const Joi = require('joi');
 const HttpStatus = require('http-status-codes');
 
 module.exports = class CheckHealthController extends PaperworkController {
-    static get dependencies(): ControllerDependenciesDefinition {
+    static get dependencies(): TControllerDependenciesDefinition {
         return ['database'];
     }
 
@@ -27,7 +27,7 @@ module.exports = class CheckHealthController extends PaperworkController {
         return '/checks/health';
     }
 
-    async index(params: ControllerParams): ControllerActionReturn {
-        return this.response(HttpStatus.OK, PaperworkStatusCodes.OK, {});
+    async index(params: TControllerParams): TControllerActionReturn {
+        return this.return(params, HttpStatus.OK, PaperworkStatusCodes.OK, {});
     }
 };

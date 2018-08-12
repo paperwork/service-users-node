@@ -1,4 +1,4 @@
-//@flow
+// @flow
 
 
 const AuthLocalController = require('./Controllers/AuthLocalController');
