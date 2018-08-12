@@ -8,6 +8,9 @@
 .*/node_modules/documentation/*.
 .*/node_modules/config-chain/*.
 
+[lints]
+untyped-type-import=error
+
 [options]
 suppress_comment= \\(.\\|\n\\)*\\@flowIgnore
 module.ignore_non_literal_requires=true
