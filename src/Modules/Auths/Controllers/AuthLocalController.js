@@ -53,8 +53,10 @@ module.exports = class AuthLocalController extends PaperworkController {
         this.aclToKong(AuthLocalController.resource, AuthLocalController.route, this.routeAcl);
 
         this._auth = passport;
-        this._auth.use(new Strategy((username: string, password: string, callback: Function) => {
-            if(username === 'test' && password === 'test') { // TODO: This is a mock check, replace with real code!
+        this._auth.use(new Strategy(async (username: string, password: string, callback: Function) => {
+            const $user = this.$C('user');
+
+            if(await $user.canLogInWith(username, password)) { // TODO: This is a mock check, replace with real code!
                 callback(
                     null,
                     { // TODO: This is a mock response, replace with real code/response!
@@ -66,7 +68,7 @@ module.exports = class AuthLocalController extends PaperworkController {
                         'message': 'Success'
                     }
                 );
-            } else if(username !== 'test' || password !== 'test') {
+            } else {
                 callback(
                     {
                         message: 'Incorrect username or password.'
