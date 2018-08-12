@@ -8,8 +8,8 @@ import type {
     TControllerRouteAclTable
 } from 'paperframe/lib/Controller';
 
-const PaperworkController = require('../../../Library/PaperworkController');
-const PaperworkStatusCodes = require('../../../Library/PaperworkStatusCodes');
+const PaperworkController = require('paperwork-sdk-service-node/lib/PaperworkController');
+const PaperworkStatusCodes = require('paperwork-sdk-service-node/lib/PaperworkStatusCodes');
 
 const Joi = require('joi');
 const HttpStatus = require('http-status-codes');

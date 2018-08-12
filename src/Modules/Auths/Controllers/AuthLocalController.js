@@ -14,8 +14,8 @@ import type {
     JwtToken
 } from '../../../ServiceProviders/Jwt';
 
-const PaperworkController = require('../../../Library/PaperworkController');
-const PaperworkStatusCodes = require('../../../Library/PaperworkStatusCodes');
+const PaperworkController = require('paperwork-sdk-service-node/lib/PaperworkController');
+const PaperworkStatusCodes = require('paperwork-sdk-service-node/lib/PaperworkStatusCodes');
 
 const passport = require('koa-passport');
 const Strategy = require('passport-local').Strategy;

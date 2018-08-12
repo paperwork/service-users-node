@@ -1,6 +1,6 @@
 //@flow
 
-const PaperworkCollection = require('../../Library/PaperworkCollection');
+const PaperworkCollection = require('paperwork-sdk-service-node/lib/PaperworkCollection');
 
 module.exports = class UserCql extends PaperworkCollection {
 };
