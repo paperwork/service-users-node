@@ -20,7 +20,7 @@ module.exports = class KongServiceProvider extends ServiceProvider {
 
         this.logger.debug('KongServiceProvider: Initialized with KONG_API_URL set to %s.', this._kongApiUrl);
 
-        this.migrate();
+        // this.migrate();
 
         return true;
     }
