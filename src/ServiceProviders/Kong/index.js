@@ -10,7 +10,7 @@ module.exports = class KongServiceProvider extends ServiceProvider {
     _kongApiUrl:                string
     _guestId:                   string
 
-    initialize(): boolean {
+    async initialize(): Promise<boolean> {
         // Kong API URL
         this._kongApiUrl = this.getEnv('KONG_API_URL');
         if(typeof this._kongApiUrl === 'undefined') {
@@ -20,7 +20,7 @@ module.exports = class KongServiceProvider extends ServiceProvider {
 
         this.logger.debug('KongServiceProvider: Initialized with KONG_API_URL set to %s.', this._kongApiUrl);
 
-        // this.migrate();
+        // return this.migrate();
 
         return true;
     }
