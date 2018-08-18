@@ -24,7 +24,7 @@ module.exports = class JwtServiceProvider extends ServiceProvider {
     _accessTokenExpiresIn:      number
     _accessTokenNotBefore:      number
 
-    initialize() {
+    async initialize(): Promise<boolean> {
         // Kong API URL
         this._kongApiUrl = this.getEnv('KONG_API_URL');
         if(typeof this._kongApiUrl === 'undefined') {
