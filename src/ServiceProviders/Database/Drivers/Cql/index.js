@@ -158,16 +158,23 @@ module.exports = class CqlDriver extends Driver {
         const availableMigrations: Array<string> = sortBy(await this.getAvailableMigrations());
         const ranMigrations: Array<string> = sortBy(await this.getRanMigrations(migrationClient));
 
+        this.logger.debug('Database: (CqlDriver) Available migrations: %j', availableMigrations);
+        this.logger.debug('Database: (CqlDriver) Ran migrations: %j', ranMigrations);
+
         const availableMigrationsLength: number = availableMigrations.length;
         const ranMigrationsLength: number = ranMigrations.length;
         if(availableMigrationsLength > ranMigrationsLength) {
             const differenceNumber: number = availableMigrationsLength - ranMigrationsLength;
 
+            this.logger.debug('Database: (CqlDriver) Available and ran migrations differ in %s items', differenceNumber);
+
             const differenceMigrations: Array<string> = takeRight(availableMigrations, differenceNumber);
+
+            this.logger.debug('Database: (CqlDriver) Differences: %j', differenceMigrations);
 
             forEach(differenceMigrations, (notYetMigrated: string) => {
                 if(indexOf(ranMigrations, notYetMigrated) >= Common.ZERO) {
-                    throw new Error('Migrations seem messed up. Please fix manually!');
+                    throw new Error('Database: (CqlDriver) Migrations seem messed up. Please fix manually!');
                 }
             });
 
@@ -178,56 +185,120 @@ module.exports = class CqlDriver extends Driver {
     }
 
     async getRanMigrations(migrationClient: cql.Client): Promise<Array<string>> {
-        const checkKeyspaceQuery: string = 'SELECT * FROM system_schema.tables WHERE keyspace_name = ?;';
-        const keyspaceInfoResult: Object = await migrationClient.execute(checkKeyspaceQuery, [this._keyspace]);
+        this.logger.debug('Database: (CqlDriver) Getting migrations that already ran ...');
+        const checkKeyspaceQuery: string = 'SELECT * FROM system_schema.tables WHERE keyspace_name = ?';
+        const keyspaceInfoResult: Object|null = await this.execute(migrationClient, checkKeyspaceQuery, [this._keyspace]);
 
-        if(keyspaceInfoResult.hasOwnProperty('rows')
-        && keyspaceInfoResult.rows.length > Common.ZERO) {
-            const migrationsTableQuery: string = 'SELECT filename FROM migrations;';
-            const migrationsTableQueryOptions: TCqlQueryOptions = {
-                'keyspace': this._keyspace
-            };
-            const migrationsTableResult: Object = await migrationClient.execute(migrationsTableQuery, [], migrationsTableQueryOptions);
+        this.logger.debug('Database: (CqlDriver) Keyspace query returned: %j', keyspaceInfoResult);
 
-            if(migrationsTableResult.hasOwnProperty('rows')
-            && migrationsTableResult.rows.length > Common.ZERO) {
-                return migrationsTableResult.rows.map(row => row.filename);
+        if(keyspaceInfoResult !== null
+        && keyspaceInfoResult.first() !== null) {
+
+            const checkMigrationsTableQuery: string = 'SELECT table_name FROM system_schema.tables WHERE keyspace_name = ? AND table_name = ?';
+            const checkMigrationsTableResult: Object|null = await this.execute(migrationClient, checkMigrationsTableQuery, [this._keyspace, 'migrations']);
+
+            this.logger.debug('Database: (CqlDriver) Migrations table check query returned: %j', checkMigrationsTableResult);
+
+            if(checkMigrationsTableResult !== null
+            && checkMigrationsTableResult.first() !== null) {
+                const migrationsTableQuery: string = `SELECT filename FROM ${this._keyspace}.migrations`;
+                const migrationsTableQueryOptions: TCqlQueryOptions = {
+                    'prepare': false,
+                    'keyspace': this._keyspace
+                };
+                const migrationsTableResult: Object|null = await this.execute(migrationClient, migrationsTableQuery, [], migrationsTableQueryOptions);
+
+                if(migrationsTableResult !== null
+                && migrationsTableResult.first() !== null) {
+                    return migrationsTableResult.rows.map(row => row.filename);
+                }
+            } else {
+                this.logger.debug('Database: (CqlDriver) Migrations table does not exist, creating ...');
+
+                const createMigrationsTableQuery: string = `CREATE TABLE IF NOT EXISTS ${this._keyspace}.migrations (filename text PRIMARY KEY, migrated_at timestamp)`;
+                const createMigrationsTableResult: Object|null = await this.execute(migrationClient, createMigrationsTableQuery);
+
+                this.logger.debug('Database: (CqlDriver) Migrations table create query returned: %j', createMigrationsTableResult);
             }
-
-            return [];
         }
 
         return [];
     }
 
     async getAvailableMigrations(): Promise<Array<string>> {
+        this.logger.debug('Database: (CqlDriver) Getting all available migrations ...');
+
         const migrationsRootDir = path.join(this.getEnv('SERVICE_DIRNAME'), '..', 'migrations', 'cql');
         const migrationsUpRootDir = path.join(migrationsRootDir, 'up');
 
         return readDir(migrationsUpRootDir);
     }
 
-    async runMigrations(migrationClient: cql.Client, migrationFiles: Array<string>) {
+    async runMigrations(migrationClient: cql.Client, migrationFiles: Array<string>): Promise<boolean> {
+        this.logger.debug('Database: (CqlDriver) Running migrations (%j) ...', migrationFiles);
+
         let migrationsPromises: Array<Promise<boolean>> = [];
 
-        forEach(migrationFiles, async (migrationFile: string) => {
-            migrationsPromises.push(this.runMigration(migrationClient, migrationFile));
-        });
+        const migrationFilesAmount: number = migrationFiles.length;
+        for(let i = 0; i < migrationFilesAmount; i++) {
+            const migrationFile = migrationFiles[i];
+            try {
+                const successful: boolean = await this.runMigration(migrationClient, migrationFile);
 
-        return Promise.all(migrationsPromises);
-    }
-
-    async runMigration(migrationClient: cql.Client, migrationFile: string): Promise<boolean> {
-        const migrationFileContent: string = await this.getMigrationFileContent(migrationFile);
-
-        const migrationFileResult: Object = await migrationClient.execute(migrationFileContent);
-
-        console.log(migrationFileResult);
+                if(successful === false) {
+                    throw new Error('Retrieved an error.');
+                }
+            } catch(err) {
+                this.logger.error('Database: (CqlDriver) Migration #%s (%s) failed:', i, migrationFile, err);
+                return false;
+            }
+        }
 
         return true;
     }
 
+    async runMigration(migrationClient: cql.Client, migrationFile: string): Promise<boolean> {
+        this.logger.debug('Database: (CqlDriver) Running migration %s ...', migrationFile);
+
+        const migrationFileContent: string = await this.getMigrationFileContent(migrationFile);
+        this.logger.debug('Database: (CqlDriver) Migration is: %s ...', migrationFileContent);
+
+        const migrationFileResult: Object|null = await this.execute(migrationClient, migrationFileContent);
+
+        this.logger.debug('Database: (CqlDriver) Migration result: %j', migrationFileResult);
+
+        if(migrationFileResult === null) {
+            return false;
+        }
+
+        await this.storeMigration(migrationClient, migrationFile);
+
+        return true;
+    }
+
+    async storeMigration(migrationClient: cql.Client, migrationFile: string): Promise<boolean> {
+        this.logger.debug('Database: (CqlDriver) Storing migration %s ...', migrationFile);
+
+        try {
+            const insertMigrationQuery: string = `INSERT INTO ${this._keyspace}.migrations (filename, migrated_at) VALUES (?, ?)`; // IF NOT EXISTS - Scylla does not support LWT yet
+            const insertMigrationResult: Object|null = await this.execute(migrationClient, insertMigrationQuery, [migrationFile, new Date()]);
+
+            if(insertMigrationResult === null) {
+                throw new Error('Retrieved an error.');
+            }
+
+            this.logger.debug('Database: (CqlDriver) Migration %s stored!', migrationFile);
+
+            return true;
+        } catch(err) {
+            this.logger.debug('Database: (CqlDriver) Migration %s could not be stored: %j', migrationFile, err);
+            return false;
+        }
+    }
+
     async getMigrationFileContent(migrationFile: string): Promise<string> {
+        this.logger.debug('Database: (CqlDriver) Getting migration (%s) content ...', migrationFile);
+
         const migrationFilePath = path.join(this.getEnv('SERVICE_DIRNAME'), '..', 'migrations', 'cql', 'up', migrationFile);
         return readFile(migrationFilePath, 'utf8');
     }
@@ -254,5 +325,17 @@ module.exports = class CqlDriver extends Driver {
     async disconnect(client: cql.Client): cql.Client {
         this.logger.debug('Database: (CqlDriver) Disconnecting ...');
         return client.shutdown();
+    }
+
+    async execute(client: cql.Client, query: string, params?: Array<any>|Object, options?: TCqlQueryOptions): Promise<?Object> {
+        try {
+            this.logger.debug('Database: (CqlDriver) Executing query (%s) with params (%j) and options (%j) ...', query, params, options);
+            const result = await client.execute(query, params, options);
+            this.logger.debug('Database: (CqlDriver) Execution of query (%s) resulted in: %j', query, result);
+            return result;
+        } catch(err) {
+            this.logger.error('Database: (CqlDriver) Execution of query (%s) resulted in an error: %j', query, err);
+            return null;
+        }
     }
 };
