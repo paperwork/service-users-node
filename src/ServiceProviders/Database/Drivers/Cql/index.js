@@ -111,11 +111,13 @@ module.exports = class CqlDriver extends Driver {
     _keyspace:                  string
     _client:                    cql.Client
 
-    initialize(): boolean {
+    async initialize(): Promise<boolean> {
         this.initializeContactPoints();
         this.initializeKeyspace();
 
-        this.prepareAndConnect();
+        await this.prepare();
+
+
 
         return true;
     }
@@ -148,12 +150,13 @@ module.exports = class CqlDriver extends Driver {
         return true;
     }
 
-    async prepareAndConnect() {
+    async prepare() {
         const migrationClientOptions: TCqlClientOptions = {
             'contactPoints': this._contactPoints
         };
 
         const migrationClient = await this.connect(migrationClientOptions);
+        this.logger.debug('Database: (CqlDriver) Connected migration client!');
 
         const availableMigrations: Array<string> = sortBy(await this.getAvailableMigrations());
         const ranMigrations: Array<string> = sortBy(await this.getRanMigrations(migrationClient));
@@ -182,6 +185,7 @@ module.exports = class CqlDriver extends Driver {
         }
 
         await this.disconnect(migrationClient);
+        this.logger.debug('Database: (CqlDriver) Disconnected migration client!');
     }
 
     async getRanMigrations(migrationClient: cql.Client): Promise<Array<string>> {
