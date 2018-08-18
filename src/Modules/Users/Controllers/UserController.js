@@ -58,9 +58,11 @@ module.exports = class UserController extends PaperworkController {
         this.aclToKong(UserController.resource, UserController.route, this.routeAcl);
     }
 
-    onEvent(eventId: string, eventPackage: TEventPackage) {
+    async onEvent(eventId: string, eventPackage: TEventPackage): Promise<boolean> {
         console.log(eventId);
         console.log(eventPackage);
+
+        return true;
     }
 
     async index(params: TControllerParams): TControllerActionReturn {
