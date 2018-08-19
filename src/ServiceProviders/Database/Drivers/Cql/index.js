@@ -115,11 +115,14 @@ module.exports = class CqlDriver extends Driver {
         this.initializeContactPoints();
         this.initializeKeyspace();
 
-        await this.prepare();
+        const success: boolean = await this.prepare();
 
+        if(success === false) {
+            this.logger.error('Database: (CqlDriver) Migration failed, not connecting to database!');
+            return false;
+        }
 
-
-        return true;
+        return this.establish();
     }
 
     initializeContactPoints(): boolean {
@@ -150,13 +153,13 @@ module.exports = class CqlDriver extends Driver {
         return true;
     }
 
-    async prepare() {
+    async prepare(): Promise<boolean> {
         const migrationClientOptions: TCqlClientOptions = {
             'contactPoints': this._contactPoints
         };
 
         const migrationClient = await this.connect(migrationClientOptions);
-        this.logger.debug('Database: (CqlDriver) Connected migration client!');
+        this.logger.info('Database: (CqlDriver) Connected migration client!');
 
         const availableMigrations: Array<string> = sortBy(await this.getAvailableMigrations());
         const ranMigrations: Array<string> = sortBy(await this.getRanMigrations(migrationClient));
@@ -185,7 +188,9 @@ module.exports = class CqlDriver extends Driver {
         }
 
         await this.disconnect(migrationClient);
-        this.logger.debug('Database: (CqlDriver) Disconnected migration client!');
+        this.logger.info('Database: (CqlDriver) Disconnected migration client!');
+
+        return true;
     }
 
     async getRanMigrations(migrationClient: cql.Client): Promise<Array<string>> {
@@ -262,7 +267,7 @@ module.exports = class CqlDriver extends Driver {
     }
 
     async runMigration(migrationClient: cql.Client, migrationFile: string): Promise<boolean> {
-        this.logger.debug('Database: (CqlDriver) Running migration %s ...', migrationFile);
+        this.logger.info('Database: (CqlDriver) Running migration %s ...', migrationFile);
 
         const migrationFileContent: string = await this.getMigrationFileContent(migrationFile);
         this.logger.debug('Database: (CqlDriver) Migration is: %s ...', migrationFileContent);
@@ -284,7 +289,7 @@ module.exports = class CqlDriver extends Driver {
         this.logger.debug('Database: (CqlDriver) Storing migration %s ...', migrationFile);
 
         try {
-            const insertMigrationQuery: string = `INSERT INTO ${this._keyspace}.migrations (filename, migrated_at) VALUES (?, ?)`; // IF NOT EXISTS - Scylla does not support LWT yet
+            const insertMigrationQuery: string = `INSERT INTO "${this._keyspace}"."migrations" (filename, migrated_at) VALUES (?, ?)`; // IF NOT EXISTS - Scylla does not support LWT yet
             const insertMigrationResult: Object|null = await this.execute(migrationClient, insertMigrationQuery, [migrationFile, new Date()]);
 
             if(insertMigrationResult === null) {
@@ -305,6 +310,21 @@ module.exports = class CqlDriver extends Driver {
 
         const migrationFilePath = path.join(this.getEnv('SERVICE_DIRNAME'), '..', 'migrations', 'cql', 'up', migrationFile);
         return readFile(migrationFilePath, 'utf8');
+    }
+
+    async establish(): Promise<boolean> {
+        this.logger.info('Database: (CqlDriver) Establishing database connection ...');
+
+        const clientOptions: TCqlClientOptions = {
+            'contactPoints': this._contactPoints,
+            'keyspace': this._keyspace
+        };
+
+        this._client = await this.connect(clientOptions);
+
+        this.logger.info('Database: (CqlDriver) Database connection established!');
+
+        return true;
     }
 
     async connect(clientOptions: TCqlClientOptions): cql.Client {
