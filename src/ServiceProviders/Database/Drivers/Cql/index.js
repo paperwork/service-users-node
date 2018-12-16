@@ -272,12 +272,23 @@ module.exports = class CqlDriver extends Driver {
         const migrationFileContent: string = await this.getMigrationFileContent(migrationFile);
         this.logger.debug('Database: (CqlDriver) Migration is: %s ...', migrationFileContent);
 
-        const migrationFileResult: Object|null = await this.execute(migrationClient, migrationFileContent);
+        const migrationCommands: Array<string> = migrationFileContent.split(';');
+        const migrationCommandsNumber: number = migrationCommands.length;
 
-        this.logger.debug('Database: (CqlDriver) Migration result: %j', migrationFileResult);
+        for(let i = 0; i < migrationCommandsNumber; i++) {
+            const migrationCommand: string = migrationCommands[i];
 
-        if(migrationFileResult === null) {
-            return false;
+            if(migrationCommand === null
+            || migrationCommand.length === Common.ZERO) {
+                continue;
+            }
+
+            const migrationFileResult: Object|null = await this.execute(migrationClient, migrationCommand);
+            this.logger.debug('Database: (CqlDriver) Migration result: %j', migrationFileResult);
+
+            if(migrationFileResult === null) {
+                return false;
+            }
         }
 
         await this.storeMigration(migrationClient, migrationFile);
@@ -290,7 +301,7 @@ module.exports = class CqlDriver extends Driver {
 
         try {
             const insertMigrationQuery: string = `INSERT INTO "${this._keyspace}"."migrations" (filename, migrated_at) VALUES (?, ?)`; // IF NOT EXISTS - Scylla does not support LWT yet
-            const insertMigrationResult: Object|null = await this.execute(migrationClient, insertMigrationQuery, [migrationFile, new Date()]);
+            const insertMigrationResult: Object|null = await this.execute(migrationClient, insertMigrationQuery, [migrationFile, new Date()], { 'prepare': true });
 
             if(insertMigrationResult === null) {
                 throw new Error('Retrieved an error.');
@@ -300,7 +311,7 @@ module.exports = class CqlDriver extends Driver {
 
             return true;
         } catch(err) {
-            this.logger.debug('Database: (CqlDriver) Migration %s could not be stored: %j', migrationFile, err);
+            this.logger.error('Database: (CqlDriver) Migration %s could not be stored: %j', migrationFile, err);
             return false;
         }
     }
@@ -309,7 +320,14 @@ module.exports = class CqlDriver extends Driver {
         this.logger.debug('Database: (CqlDriver) Getting migration (%s) content ...', migrationFile);
 
         const migrationFilePath = path.join(this.getEnv('SERVICE_DIRNAME'), '..', 'migrations', 'cql', 'up', migrationFile);
-        return readFile(migrationFilePath, 'utf8');
+        let content: string = '';
+        try {
+            content = await readFile(migrationFilePath, 'utf8');
+        } catch(err) {
+            this.logger.error('Database (CqlDriver) Could not read file: %j', err);
+        }
+
+        return content.replace(/(\r\n|\n|\r|\t)/g, '');
     }
 
     async establish(): Promise<boolean> {
