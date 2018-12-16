@@ -196,7 +196,10 @@ module.exports = class CqlDriver extends Driver {
     async getRanMigrations(migrationClient: cql.Client): Promise<Array<string>> {
         this.logger.debug('Database: (CqlDriver) Getting migrations that already ran ...');
         const checkKeyspaceQuery: string = 'SELECT * FROM system_schema.tables WHERE keyspace_name = ?';
-        const keyspaceInfoResult: Object|null = await this.execute(migrationClient, checkKeyspaceQuery, [this._keyspace]);
+        const checkKeyspaceQueryOptions: TCqlQueryOptions = {
+            'prepare': true
+        };
+        const keyspaceInfoResult: Object|null = await this.execute(migrationClient, checkKeyspaceQuery, [this._keyspace], checkKeyspaceQueryOptions);
 
         this.logger.debug('Database: (CqlDriver) Keyspace query returned: %j', keyspaceInfoResult);
 
@@ -222,16 +225,28 @@ module.exports = class CqlDriver extends Driver {
                     return migrationsTableResult.rows.map(row => row.filename);
                 }
             } else {
-                this.logger.debug('Database: (CqlDriver) Migrations table does not exist, creating ...');
-
-                const createMigrationsTableQuery: string = `CREATE TABLE IF NOT EXISTS ${this._keyspace}.migrations (filename text PRIMARY KEY, migrated_at timestamp)`;
-                const createMigrationsTableResult: Object|null = await this.execute(migrationClient, createMigrationsTableQuery);
-
-                this.logger.debug('Database: (CqlDriver) Migrations table create query returned: %j', createMigrationsTableResult);
+                await this.createMigrationsTable(migrationClient);
             }
         }
 
+        // This means that not even the keyspace exists yet. Hence, we return an empty array, so that *all* migrations
+        // (including the first one, which is going to be the keyspace creation) will run.
         return [];
+    }
+
+    async createMigrationsTable(migrationClient: cql.Client): Promise<boolean> {
+        this.logger.debug('Database: (CqlDriver) Migrations table does not exist, creating ...');
+
+        const createMigrationsTableQuery: string = `CREATE TABLE IF NOT EXISTS ${this._keyspace}.migrations (filename text PRIMARY KEY, migrated_at timestamp)`;
+        const createMigrationsTableResult: Object|null = await this.execute(migrationClient, createMigrationsTableQuery);
+
+        this.logger.debug('Database: (CqlDriver) Migrations table create query returned: %j', createMigrationsTableResult);
+
+        if(createMigrationsTableResult !== null) {
+            return true;
+        }
+
+        return false;
     }
 
     async getAvailableMigrations(): Promise<Array<string>> {
@@ -296,7 +311,7 @@ module.exports = class CqlDriver extends Driver {
         return true;
     }
 
-    async storeMigration(migrationClient: cql.Client, migrationFile: string): Promise<boolean> {
+    async storeMigration(migrationClient: cql.Client, migrationFile: string, secondTry: ?boolean): Promise<boolean> {
         this.logger.debug('Database: (CqlDriver) Storing migration %s ...', migrationFile);
 
         try {
@@ -311,9 +326,22 @@ module.exports = class CqlDriver extends Driver {
 
             return true;
         } catch(err) {
-            this.logger.error('Database: (CqlDriver) Migration %s could not be stored: %j', migrationFile, err);
+            if(secondTry === true) {
+                this.logger.error('Database: (CqlDriver) Migration %s could not be stored: %j', migrationFile, err);
+                return false;
+            }
+        }
+
+        this.logger.debug('Database: (CqlDriver) Migration %s could not be stored!', migrationFile);
+        this.logger.debug('Database: (CqlDriver) Re-trying after creating migrations table ...');
+
+        const migrationsTableResult: Object|null = await this.createMigrationsTable(migrationClient);
+
+        if(migrationsTableResult === null) {
             return false;
         }
+
+        return this.storeMigration(migrationClient, migrationFile, true);
     }
 
     async getMigrationFileContent(migrationFile: string): Promise<string> {
